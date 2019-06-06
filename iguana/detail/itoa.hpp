@@ -31,6 +31,7 @@
 #include <cstring>      // memcpy
 #include <type_traits>
 #include "absl/meta/type_traits.h"
+#include "absl/utility/utility.h"
 
 namespace dec_ {
 
@@ -40,7 +41,7 @@ namespace dec_ {
     //         three-optimization-tips-for-c/10151361643253920/
 
 	template < typename T, size_t N, typename Gen, size_t... Is >
-	constexpr auto generate_array(Gen&& item, std::index_sequence<Is...>)
+	constexpr auto generate_array(Gen&& item, absl::index_sequence<Is...>) -> decltype(std::array<T, N>{ {item(Is)...}})
 	{
 		return std::array<T, N>{ {item(Is)...}};
 	}
@@ -48,7 +49,7 @@ namespace dec_ {
 	const std::array<char, 200>
 		digits = generate_array<char, 200>([](size_t i) {
 		return char('0' + ((i % 2) ? ((i / 2) % 10) : ((i / 2) / 10)));
-	}, std::make_index_sequence<200>{});
+	}, absl::make_index_sequence<200>{});
 
  //   extern const std::array<char,200> digits;
     static inline uint16_t const& dd(uint8_t u) {

@@ -7,7 +7,7 @@ namespace msgpack { MSGPACK_API_VERSION_NAMESPACE(v2)
 	namespace adaptor
 	{
 		template <typename Tuple, size_t ... Is>
-		inline auto make_define_array_from_tuple_impl(Tuple& tuple, std::index_sequence<Is...>)
+		inline auto make_define_array_from_tuple_impl(Tuple& tuple, absl::index_sequence<Is...>)
 		{
 			return v1::type::make_define_array(std::get<Is>(tuple)...);
 		}
@@ -15,7 +15,7 @@ namespace msgpack { MSGPACK_API_VERSION_NAMESPACE(v2)
 		template <typename Tuple>
 		inline auto make_define_array_from_tuple(Tuple& tuple)
 		{
-			using indices_type = std::make_index_sequence<std::tuple_size<Tuple>::value>;
+			using indices_type = absl::make_index_sequence<std::tuple_size<Tuple>::value>;
 			return make_define_array_from_tuple_impl(tuple, indices_type{});
 		}
 

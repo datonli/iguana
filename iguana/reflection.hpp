@@ -16,6 +16,8 @@
 #include <functional>
 //#include <string_view>
 #include "absl/strings/string_view.h"
+#include "absl/utility/utility.h"
+
 #include "detail/itoa.hpp"
 #include "detail/traits.hpp"
 #include "detail/string_stream.hpp"
@@ -361,7 +363,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     inline constexpr bool is_reflection_v = is_reflection<T>::value;
 
     template<size_t I, typename T>
-    constexpr decltype(auto) get(T&& t)
+    constexpr decltype(auto) get(T&& t) 
     {
         using M = decltype(iguana_reflect_members(std::forward<T>(t)));
 		using U = decltype(std::forward<T>(t).*(std::get<I>(M::apply_impl())));
@@ -377,13 +379,13 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template <typename T, size_t ... Is>
-    constexpr auto get_impl(T const& t, std::index_sequence<Is...>)
+    constexpr auto get_impl(T const& t, absl::index_sequence<Is...>)
     {
         return std::make_tuple(get<Is>(t)...);
     }
 
     template <typename T, size_t ... Is>
-    constexpr auto get_impl(T& t, std::index_sequence<Is...>)
+    constexpr auto get_impl(T& t, absl::index_sequence<Is...>)
     {
         return std::make_tuple(std::ref(get<Is>(t))...);
     }
@@ -392,14 +394,14 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     constexpr auto get(T const& t)
     {
         using M = decltype(iguana_reflect_members(t));
-        return get_impl(t, std::make_index_sequence<M::value()>{});
+        return get_impl(t, absl::make_index_sequence<M::value()>{});
     }
 
     template <typename T>
     constexpr auto get_ref(T& t)
     {
         using M = decltype(iguana_reflect_members(t));
-        return get_impl(t, std::make_index_sequence<M::value()>{});
+        return get_impl(t, absl::make_index_sequence<M::value()>{});
     }
 
     template<typename T, size_t  I>
@@ -459,20 +461,20 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template <class Tuple, class F, std::size_t...Is>
-    void tuple_switch(std::size_t i, Tuple&& t, F&& f, std::index_sequence<Is...>) {
+    void tuple_switch(std::size_t i, Tuple&& t, F&& f, absl::index_sequence<Is...>) {
         ((i == Is && ((std::forward<F>(f)(std::get<Is>(std::forward<Tuple>(t)))), false)), ...);
     }
 
     //-------------------------------------------------------------------------------------------------------------//
     //-------------------------------------------------------------------------------------------------------------//
     template <typename... Args, typename F, std::size_t... Idx>
-    constexpr void for_each(std::tuple<Args...>& t, F&& f, std::index_sequence<Idx...>)
+    constexpr void for_each(std::tuple<Args...>& t, F&& f, absl::index_sequence<Idx...>)
     {
         (std::forward<F>(f)(std::get<Idx>(t), std::integral_constant<size_t, Idx>{}), ...);
     }
 
     template <typename... Args, typename F, std::size_t... Idx>
-    constexpr void for_each(const std::tuple<Args...>& t, F&& f, std::index_sequence<Idx...>)
+    constexpr void for_each(const std::tuple<Args...>& t, F&& f, absl::index_sequence<Idx...>)
     {
         (std::forward<F>(f)(std::get<Idx>(t), std::integral_constant<size_t, Idx>{}), ...);
     }
@@ -481,7 +483,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     constexpr absl::enable_if_t<is_reflection<T>::value> for_each(T&& t, F&& f)
     {
         using M = decltype(iguana_reflect_members(std::forward<T>(t)));
-        for_each(M::apply_impl(), std::forward<F>(f), std::make_index_sequence<M::value()>{});
+        for_each(M::apply_impl(), std::forward<F>(f), absl::make_index_sequence<M::value()>{});
     }
 
 	template<typename T, typename F>
@@ -489,7 +491,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 	{
 		//using M = decltype(iguana_reflect_members(std::forward<T>(t)));
 		constexpr const size_t SIZE = std::tuple_size<absl::decay_t<T>>::value;
-		for_each(std::forward<T>(t), std::forward<F>(f), std::make_index_sequence<SIZE>{});
+		for_each(std::forward<T>(t), std::forward<F>(f), absl::make_index_sequence<SIZE>{});
 	}
 }
 #endif //IGUANA_REFLECTION_HPP
