@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <cstring>      // memcpy
 #include <type_traits>
+#include "absl/meta/type_traits.h"
 
 namespace dec_ {
 
@@ -213,7 +214,7 @@ namespace dec_ {
 
         // itoa: handle unsigned integral operands (selected by SFINAE)
         template<typename U,
-            std::enable_if_t<! std::is_signed<U>::value
+            absl::enable_if_t<! std::is_signed<U>::value
                 && std::is_integral<U>::value>* = nullptr>
 		static inline char* itoa( U u, char* p )
         {
@@ -222,7 +223,7 @@ namespace dec_ {
 
         // itoa: handle signed integral operands (selected by SFINAE)
         template<typename I, size_t N=sizeof(I),
-            std::enable_if_t<std::is_signed<I>::value
+            absl::enable_if_t<std::is_signed<I>::value
                 && std::is_integral<I>::value>* = nullptr>
 		static inline char* itoa( I i, char* p )
         {

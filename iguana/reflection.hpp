@@ -14,8 +14,8 @@
 #include <array>
 #include <type_traits>
 #include <functional>
-#include <string_view>
-
+//#include <string_view>
+#include "absl/strings/string_view.h"
 #include "detail/itoa.hpp"
 #include "detail/traits.hpp"
 #include "detail/string_stream.hpp"
@@ -144,7 +144,7 @@ namespace iguana::detail {
 #define MAKE_ARG_LIST_119(op, arg, ...)  op(arg), MARCO_EXPAND(MAKE_ARG_LIST_118(op, __VA_ARGS__))
 #define MAKE_ARG_LIST_120(op, arg, ...)  op(arg), MARCO_EXPAND(MAKE_ARG_LIST_119(op, __VA_ARGS__))
 
-#define ADD_VIEW(str) std::string_view(#str, sizeof(#str)-1)
+#define ADD_VIEW(str) absl::string_view(#str, sizeof(#str)-1)
 
 #define SEPERATOR ,
 #define CON_STR_1(element, ...) ADD_VIEW(element)
@@ -326,15 +326,15 @@ static auto iguana_reflect_members(STRUCT_NAME const&) \
         }\
         using type = void;\
         using size_type = std::integral_constant<size_t, GET_ARG_COUNT(__VA_ARGS__)>; \
-        constexpr static std::string_view name() { return std::string_view(#STRUCT_NAME, sizeof(#STRUCT_NAME)-1); }\
+        constexpr static absl::string_view name() { return absl::string_view(#STRUCT_NAME, sizeof(#STRUCT_NAME)-1); }\
         constexpr static size_t value() { return size_type::value; }\
-        constexpr static std::array<std::string_view, size_type::value> arr() { return arr_##STRUCT_NAME; }\
+        constexpr static std::array<absl::string_view, size_type::value> arr() { return arr_##STRUCT_NAME; }\
     }; \
     return reflect_members{}; \
 }
 
 #define MAKE_META_DATA(STRUCT_NAME, N, ...) \
-    constexpr inline std::array<std::string_view, N> arr_##STRUCT_NAME = { MARCO_EXPAND(MACRO_CONCAT(CON_STR, N)(__VA_ARGS__)) };\
+    constexpr inline std::array<absl::string_view, N> arr_##STRUCT_NAME = { MARCO_EXPAND(MACRO_CONCAT(CON_STR, N)(__VA_ARGS__)) };\
     MAKE_META_DATA_IMPL(STRUCT_NAME, MAKE_ARG_LIST(N, &STRUCT_NAME::FIELD, __VA_ARGS__))
 
 }
@@ -353,7 +353,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     };
 
     template <typename T>
-    struct is_reflection<T, std::void_t<typename Reflect_members<T>::type>> : std::true_type
+    struct is_reflection<T, absl::void_t<typename Reflect_members<T>::type>> : std::true_type
     {
     };
 
@@ -366,7 +366,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
         using M = decltype(iguana_reflect_members(std::forward<T>(t)));
 		using U = decltype(std::forward<T>(t).*(std::get<I>(M::apply_impl())));
 		
-		if constexpr(std::is_array_v<U>) {
+		if constexpr(std::is_array<U>::value) {
 			auto s = std::forward<T>(t).*(std::get<I>(M::apply_impl()));
 			std::array<char, sizeof(U)> arr;
 			memcpy(arr.data(), s, arr.size());
@@ -403,7 +403,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template<typename T, size_t  I>
-    constexpr const std::string_view get_name()
+    constexpr const absl::string_view get_name()
     {
         using M = decltype(iguana_reflect_members(std::declval<T>()));
         static_assert(I<M::value(), "out of range");
@@ -411,7 +411,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template<typename T>
-    constexpr const std::string_view get_name(size_t i)
+    constexpr const absl::string_view get_name(size_t i)
     {
         using M = decltype(iguana_reflect_members(std::declval<T>()));
 //		static_assert(I<M::value(), "out of range");
@@ -419,21 +419,21 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template<typename T>
-    constexpr const std::string_view get_name()
+    constexpr const absl::string_view get_name()
     {
         using M = decltype(iguana_reflect_members(std::declval<T>()));
         return M::name();
     }
 
     template<typename T>
-    constexpr std::enable_if_t<is_reflection<T>::value, size_t> get_value()
+    constexpr absl::enable_if_t<is_reflection<T>::value, size_t> get_value()
     {
         using M = decltype(iguana_reflect_members(std::declval<T>()));
         return M::value();
     }
 
     template<typename T>
-    constexpr std::enable_if_t<!is_reflection<T>::value, size_t> get_value()
+    constexpr absl::enable_if_t<!is_reflection<T>::value, size_t> get_value()
     {
         return 1;
     }
@@ -446,7 +446,7 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template<typename T>
-    constexpr auto get_index(std::string_view name)
+    constexpr auto get_index(absl::string_view name)
     {
         using M = decltype(iguana_reflect_members(std::declval<T>()));
         constexpr auto arr = M::arr();
@@ -478,17 +478,17 @@ MAKE_META_DATA(STRUCT_NAME, GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
     }
 
     template<typename T, typename F>
-    constexpr std::enable_if_t<is_reflection<T>::value> for_each(T&& t, F&& f)
+    constexpr absl::enable_if_t<is_reflection<T>::value> for_each(T&& t, F&& f)
     {
         using M = decltype(iguana_reflect_members(std::forward<T>(t)));
         for_each(M::apply_impl(), std::forward<F>(f), std::make_index_sequence<M::value()>{});
     }
 
 	template<typename T, typename F>
-	constexpr std::enable_if_t<is_tuple<std::decay_t<T>>::value> for_each(T&& t, F&& f)
+	constexpr absl::enable_if_t<is_tuple<absl::decay_t<T>>::value> for_each(T&& t, F&& f)
 	{
 		//using M = decltype(iguana_reflect_members(std::forward<T>(t)));
-		constexpr const size_t SIZE = std::tuple_size_v<std::decay_t<T>>;
+		constexpr const size_t SIZE = std::tuple_size<absl::decay_t<T>>::value;
 		for_each(std::forward<T>(t), std::forward<F>(f), std::make_index_sequence<SIZE>{});
 	}
 }

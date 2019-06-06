@@ -96,17 +96,17 @@ namespace iguana::xml {
             }
 
             template<typename T>
-            constexpr bool is_64_v = std::is_same_v<T, std::int64_t>||std::is_same_v<T, std::uint64_t>;
+            constexpr bool is_64_v = std::is_same<T, std::int64_t>::value||std::is_same<T, std::uint64_t>::value;
 
             template <typename T>
             inline auto get_value(char const* str, size_t length, T& value)
-            -> std::enable_if_t<std::is_arithmetic<T>::value>
+            -> absl::enable_if_t<std::is_arithmetic<T>::value>
             {
                 using U = std::remove_const_t<std::remove_reference_t<T>>;
-                if constexpr(std::is_integral_v<U>&&!detail::is_64_v<U>){
+                if constexpr(std::is_integral<U>::value&&!detail::is_64_v<U>){
                     value = std::atoi(str);
                 }
-                else if constexpr(std::is_floating_point_v<U>){
+                else if constexpr(std::is_floating_point<U>::value){
                         value = std::atof(str);
                 }
                 else if constexpr(detail::is_64_v<U>){
@@ -275,7 +275,7 @@ namespace iguana::xml {
 
         //to xml
         template<typename Stream, typename T>
-        std::enable_if_t<!std::is_floating_point<T>::value && (std::is_integral<T>::value || std::is_unsigned<T>::value || std::is_signed<T>::value)>
+        absl::enable_if_t<!std::is_floating_point<T>::value && (std::is_integral<T>::value || std::is_unsigned<T>::value || std::is_signed<T>::value)>
         render_xml_value(Stream& ss, T value)
         {
             char temp[20];
@@ -284,7 +284,7 @@ namespace iguana::xml {
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t<std::is_floating_point<T>::value> render_xml_value(Stream& ss, T value)
+        absl::enable_if_t<std::is_floating_point<T>::value> render_xml_value(Stream& ss, T value)
         {
             char temp[20];
             sprintf(temp, "%f", value);
@@ -304,7 +304,7 @@ namespace iguana::xml {
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t<std::is_arithmetic<T>::value> render_key(Stream& ss, T t) {
+        absl::enable_if_t<std::is_arithmetic<T>::value> render_key(Stream& ss, T t) {
             ss.put('<');
             render_xml_value(ss, t);
             ss.put('>');
@@ -337,7 +337,7 @@ namespace iguana::xml {
             ss.put('>');
         }
 
-        template<typename Stream, typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename Stream, typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         void to_xml_impl(Stream& s, T &&t) {
             for_each(std::forward<T>(t), [&t, &s](const auto v,  auto i)
             {
@@ -362,14 +362,14 @@ namespace iguana::xml {
             });
         }
 
-        template<typename Stream, typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename Stream, typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         void to_xml(Stream& s, T &&t) {
             //render_head(s, "xml");
             s.write(IGUANA_XML_HEADER, xml_reader_t::xml_header_length);
             to_xml_impl(s, std::forward<T>(t));
         }
 
-        template<typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         constexpr void do_read(xml_reader_t &rd, T &&t)
         {
             for_each(std::forward<T>(t), [&t, &rd](const auto v,  auto i)
@@ -400,7 +400,7 @@ namespace iguana::xml {
             });
         }
 
-        template<typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         void from_xml(T &&t, const char *buf, size_t len = -1)
         {
             xml_reader_t rd(buf, len);

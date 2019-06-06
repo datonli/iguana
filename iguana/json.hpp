@@ -42,7 +42,7 @@ namespace iguana { namespace json
         void render_json_value(Stream& ss, bool b) { ss.write(b ? "true" : "false"); };
 
         template<typename Stream, typename T>
-        std::enable_if_t<!std::is_floating_point<T>::value&&(std::is_integral<T>::value || std::is_unsigned<T>::value || std::is_signed<T>::value)>
+        absl::enable_if_t<!std::is_floating_point<T>::value&&(std::is_integral<T>::value || std::is_unsigned<T>::value || std::is_signed<T>::value)>
         render_json_value(Stream& ss, T value)
         {
             char temp[20];
@@ -67,7 +67,7 @@ namespace iguana { namespace json
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t<std::is_floating_point<T>::value> render_json_value(Stream& ss, T value)
+        absl::enable_if_t<std::is_floating_point<T>::value> render_json_value(Stream& ss, T value)
         {
             char temp[20];
             sprintf(temp, "%f", value);
@@ -87,7 +87,7 @@ namespace iguana { namespace json
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t<std::is_arithmetic<T>::value> render_key(Stream& ss, T t) {
+        absl::enable_if_t<std::is_arithmetic<T>::value> render_key(Stream& ss, T t) {
             ss.put('"');
             render_json_value(ss, t);
             ss.put('"');
@@ -99,16 +99,16 @@ namespace iguana { namespace json
         }
 
         template<typename Stream, typename T>
-        constexpr auto to_json(Stream& ss, T &&t) -> std::enable_if_t<is_reflection<T>::value>;
+        constexpr auto to_json(Stream& ss, T &&t) -> absl::enable_if_t<is_reflection<T>::value>;
 
         template<typename Stream, typename T>
-        auto render_json_value(Stream& ss, T &&t) -> std::enable_if_t<is_reflection<T>::value>
+        auto render_json_value(Stream& ss, T &&t) -> absl::enable_if_t<is_reflection<T>::value>
         {
             to_json(ss, std::forward<T>(t));
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t <std::is_enum<T>::value> render_json_value(Stream& ss, T val)
+        absl::enable_if_t <std::is_enum<T>::value> render_json_value(Stream& ss, T val)
         {
             render_json_value(ss, (std::underlying_type_t<T>&)val);
         }
@@ -137,7 +137,7 @@ namespace iguana { namespace json
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t <is_associat_container<T>::value>
+        absl::enable_if_t <is_associat_container<T>::value>
         render_json_value(Stream& ss, const T&o) {
             ss.put('{');
             join(ss, o.cbegin(), o.cend(), ',',
@@ -150,7 +150,7 @@ namespace iguana { namespace json
         }
 
         template<typename Stream, typename T>
-        std::enable_if_t <is_sequence_container<T>::value> render_json_value(Stream& ss, const T &v) {
+        absl::enable_if_t <is_sequence_container<T>::value> render_json_value(Stream& ss, const T &v) {
             ss.put('[');
             join(ss, v.cbegin(), v.cend(), ',',
                  [&ss](const auto &jsv) {
@@ -167,9 +167,9 @@ namespace iguana { namespace json
         };
 
 		template<typename Stream, typename T>
-		constexpr auto to_json(Stream& s, T&& v)->std::enable_if_t<is_sequence_container<std::decay_t<T>>::value>
+		constexpr auto to_json(Stream& s, T&& v)->absl::enable_if_t<is_sequence_container<absl::decay_t<T>>::value>
 		{
-			using U = typename std::decay_t<T>::value_type;
+			using U = typename absl::decay_t<T>::value_type;
 			s.put('[');
 			const size_t size = v.size();
 			for (size_t i = 0; i < size; i++)
@@ -188,10 +188,10 @@ namespace iguana { namespace json
 		}
 
 		template<typename Stream, typename T>
-		constexpr auto to_json(Stream& s, T&& t)->std::enable_if_t<is_tuple<std::decay_t<T>>::value> {
-			using U = typename std::decay_t<T>;
+		constexpr auto to_json(Stream& s, T&& t)->absl::enable_if_t<is_tuple<absl::decay_t<T>>::value> {
+			using U = typename absl::decay_t<T>;
 			s.put('[');
-			const size_t size = std::tuple_size_v<U>;
+			const size_t size = std::tuple_size<U>::value;
 			for_each(std::forward<T>(t), [&s, size](auto& v, auto i) {
 				render_json_value(s, v);
 
@@ -202,7 +202,7 @@ namespace iguana { namespace json
 		}
 
         template<typename Stream, typename T>
-        constexpr auto to_json(Stream& s, T &&t) -> std::enable_if_t<is_reflection<T>::value>
+        constexpr auto to_json(Stream& s, T &&t) -> absl::enable_if_t<is_reflection<T>::value>
         {
             s.put('{');
             for_each(std::forward<T>(t), [&t, &s](const auto &v,  auto i)
@@ -246,7 +246,7 @@ namespace iguana { namespace json
 					return false;
 				}
 
-				bool operator != (std::string_view rhs) const
+				bool operator != (absl::string_view rhs) const
 				{
 					if (len == rhs.length())
 					{
@@ -865,7 +865,7 @@ namespace iguana { namespace json
 
         //read json to value
         template<typename T>
-        inline std::enable_if_t<is_signed_intergral_like<T>::value> read_json(reader_t &rd, T &val) {
+        inline absl::enable_if_t<is_signed_intergral_like<T>::value> read_json(reader_t &rd, T &val) {
             auto &tok = rd.peek();
             switch (tok.type) {
                 case token::t_string: {
@@ -898,7 +898,7 @@ namespace iguana { namespace json
         }
 
         template<typename T>
-        inline std::enable_if_t<is_unsigned_intergral_like<T>::value> read_json(reader_t &rd, T &val) {
+        inline absl::enable_if_t<is_unsigned_intergral_like<T>::value> read_json(reader_t &rd, T &val) {
             auto &tok = rd.peek();
             switch (tok.type) {
                 case token::t_string: {
@@ -933,13 +933,13 @@ namespace iguana { namespace json
         }
 
         template<typename T>
-        inline std::enable_if_t<std::is_enum<T>::value> read_json(reader_t &rd, T &val) {
+        inline absl::enable_if_t<std::is_enum<T>::value> read_json(reader_t &rd, T &val) {
             typedef typename std::underlying_type<T>::type RAW_TYPE;
             read_json(rd, (RAW_TYPE&)val);
         }
 
         template<typename T>
-        inline std::enable_if_t<std::is_floating_point<T>::value> read_json(reader_t &rd, T &val)
+        inline absl::enable_if_t<std::is_floating_point<T>::value> read_json(reader_t &rd, T &val)
         {
             auto& tok = rd.peek();
             switch (tok.type)
@@ -1074,17 +1074,17 @@ namespace iguana { namespace json
         }
 
         template<typename T>
-        std::enable_if_t<is_emplace_back_able<T>::value> emplace_back(T &val) {
+        absl::enable_if_t<is_emplace_back_able<T>::value> emplace_back(T &val) {
             val.emplace_back();
         }
 
         template<typename T>
-        std::enable_if_t<is_template_instant_of<std::queue, T>::value> emplace_back(T &val) {
+        absl::enable_if_t<is_template_instant_of<std::queue, T>::value> emplace_back(T &val) {
             val.emplace();
         }
 
         template<typename T>
-        inline std::enable_if_t<is_sequence_container<T>::value> read_json(reader_t &rd, T &val) {
+        inline absl::enable_if_t<is_sequence_container<T>::value> read_json(reader_t &rd, T &val) {
             if (rd.expect('[') == false) {
                 rd.error("array must start with [.");
             }
@@ -1110,7 +1110,7 @@ namespace iguana { namespace json
         }
 
         template<typename T>
-        inline std::enable_if_t<is_associat_container<T>::value> read_json(reader_t &rd, T &val) {
+        inline absl::enable_if_t<is_associat_container<T>::value> read_json(reader_t &rd, T &val) {
             if (rd.expect('{') == false)
             {
                 rd.error("object must start with {!");
@@ -1148,14 +1148,14 @@ namespace iguana { namespace json
             rd.next();
         }
 
-        template<typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         inline void read_json(reader_t &rd, T &val) {
             do_read(rd, val);
             rd.next();
         }
 
         template<typename T>
-		inline constexpr std::enable_if_t<is_reflection_v<T>> do_read(reader_t &rd, T &&t)
+		inline constexpr absl::enable_if_t<is_reflection_v<T>> do_read(reader_t &rd, T &&t)
         {
             for_each(std::forward<T>(t), [&t, &rd](const auto &v,  auto i)
             {
@@ -1207,9 +1207,9 @@ namespace iguana { namespace json
 		}
 
 		template<typename T>
-		inline constexpr std::enable_if_t<is_tuple<std::decay_t<T>>::value, bool>
+		inline constexpr absl::enable_if_t<is_tuple<absl::decay_t<T>>::value, bool>
 			from_json(T&& t, const char *buf, size_t len = -1) {
-			using U = std::decay_t<T>;
+			using U = absl::decay_t<T>;
 			g_has_error = false;
 			reader_t rd(buf, len);
 			rd.next();
@@ -1221,10 +1221,10 @@ namespace iguana { namespace json
 		}
 
 		template<typename T>
-		inline constexpr std::enable_if_t<is_sequence_container<std::decay_t<T>>::value, bool> 
+		inline constexpr absl::enable_if_t<is_sequence_container<absl::decay_t<T>>::value, bool> 
 			from_json(T&& v, const char *buf, size_t len = -1) {
 			v.clear();
-			using U = typename std::decay_t<T>::value_type;
+			using U = typename absl::decay_t<T>::value_type;
 			U t{};
 			reader_t rd(buf, len);
 			rd.next();
@@ -1241,7 +1241,7 @@ namespace iguana { namespace json
 		}
 
         template<typename T>
-        inline constexpr std::enable_if_t<is_reflection_v<T>, bool> from_json(T &&t, const char *buf, size_t len = -1) {
+        inline constexpr absl::enable_if_t<is_reflection_v<T>, bool> from_json(T &&t, const char *buf, size_t len = -1) {
             g_has_error = false;
             reader_t rd(buf, len);
             do_read(rd, t);
@@ -1249,7 +1249,7 @@ namespace iguana { namespace json
         }
 
         //this interface support disorderly parse, however slower than from_json interface
-        template<typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         inline constexpr bool from_json0(T &&t, const char *buf, size_t len = -1) {
             g_has_error = false;
             reader_t rd(buf, len);
@@ -1257,7 +1257,7 @@ namespace iguana { namespace json
             return !g_has_error;
         }
 
-        template<typename T, typename = std::enable_if_t<is_reflection<T>::value>>
+        template<typename T, typename = absl::enable_if_t<is_reflection<T>::value>>
         constexpr void do_read0(reader_t &rd, T &&t)
         {
             using M = decltype(iguana_reflect_members(std::forward<T>(t)));
@@ -1270,7 +1270,7 @@ namespace iguana { namespace json
                 rd.next();
 				auto& tk = rd.peek();
 
-                std::string_view s(tk.str.str, tk.str.len);
+                absl::string_view s(tk.str.str, tk.str.len);
 				index = iguana::get_index<T>(s);
                 if(index==Size){
 					if (tk.type == token::t_end)

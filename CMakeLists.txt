@@ -2,17 +2,20 @@ cmake_minimum_required(VERSION 2.8)
 project(iguana)
 
 if(MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
 ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++14")
 endif(MSVC)
 set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
 set(IGUANA_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(${IGUANA_DIR}/third_party/abseil-cpp)
+
 include_directories(
 	${IGUANA_DIR}
 	${IGUANA_DIR}/third_party/msgpack/include
+		${IGUANA_DIR}/third_party/abseil-cpp/
 )
 
 set(EXAMPLE

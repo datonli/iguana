@@ -12,6 +12,9 @@
 #include <deque>
 #include <queue>
 #include <list>
+
+#include "absl/meta/type_traits.h"
+
 namespace iguana
 {
     template< class T >
@@ -65,9 +68,9 @@ namespace iguana
     struct has_type;
 
     template <typename T, typename... Us>
-    struct has_type<T, std::tuple<Us...>> : std::disjunction<std::is_same<T, Us>...> {};
+    struct has_type<T, std::tuple<Us...>> : absl::disjunction<std::is_same<T, Us>...> {};
 
     template<typename T>
-    inline constexpr bool  is_int64_v = std::is_same_v<T, int64_t>||std::is_same_v<T, uint64_t>;
+    inline constexpr bool  is_int64_v = std::is_same<T, int64_t>::value||std::is_same<T, uint64_t>::value;
 }
 #endif //SERIALIZE_TRAITS_HPP

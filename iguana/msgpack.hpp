@@ -20,7 +20,7 @@ namespace msgpack { MSGPACK_API_VERSION_NAMESPACE(v2)
 		}
 
 		template <typename T>
-		struct convert<T, std::enable_if_t<::iguana::is_reflection<T>::value>>
+		struct convert<T, absl::enable_if_t<::iguana::is_reflection<T>::value>>
 		{
 			msgpack::object const& operator()(msgpack::object const& o, T& v) const
 			{
@@ -31,7 +31,7 @@ namespace msgpack { MSGPACK_API_VERSION_NAMESPACE(v2)
 		};
 
 		template <typename T>
-		struct pack<T, std::enable_if_t<::iguana::is_reflection<T>::value>>
+		struct pack<T, absl::enable_if_t<::iguana::is_reflection<T>::value>>
 		{
 			template <typename Stream>
 			msgpack::packer<Stream>& operator()(msgpack::packer<Stream>& o, T const& v) const
